@@ -32,9 +32,7 @@ class Fibonacci:
         a, b = self._fib_res(n >> 1, p)
         c = mod((mod(a, p) * mod(((b << 1) - a), p)), p)
         d = mod((powmod(a, 2, p) + powmod(b, 2, p)), p)
-        if n & 1 == 0:
-            return (c, d)
-        return (d, mod((c + d), p))
+        return (c, d) if n & 1 == 0 else (d, mod((c + d), p))
 
     def get_n_mod_d(self, n, d, use="mersenne"):
         if n < 0:
@@ -49,25 +47,21 @@ class Fibonacci:
     def get_period_bigint(self, N, min_accept, xdiff):
         search_len = int(pow(N, (1.0 / 6) / 100))
 
-        if search_len < min_accept:
-            search_len = min_accept
-
+        search_len = max(search_len, min_accept)
         if self.verbose:
             print("Search_len: %d, log2(N): %d" % (search_len, ilog2(N)))
 
         starttime = time.time()
         p_len = 10 ** (((ilog10(N) + xdiff) >> 1) + 1)
         begin, end = N - p_len, N + p_len
-        if begin < 1:
-            begin = 1
-
+        begin = max(begin, 1)
         if self.verbose:
             print("Search begin: %d, end: %d" % (begin, end))
 
-        look_up = {}
-        for x in tqdm(range(search_len), disable=(not self.progress)):
-            look_up[self.get_n_mod_d(x, N)] = x
-
+        look_up = {
+            self.get_n_mod_d(x, N): x
+            for x in tqdm(range(search_len), disable=(not self.progress))
+        }
         if self.verbose:
             print("Searching...")
 
@@ -81,19 +75,18 @@ class Fibonacci:
                         phi_guess = randi - res_n
                         if phi_guess & 1 == 0:
                             if self.get_n_mod_d(phi_guess, N) == 0:
-                                td = int(time.time() - starttime)
                                 if self.verbose:
+                                    td = int(time.time() - starttime)
                                     print(
                                         "For N = %d Found T:%d, randi: %d, time used %f secs."
                                         % (N, T, randi, td)
                                     )
                                 return phi_guess
-                        else:
-                            if self.verbose:
-                                print(
-                                    "For N = %d\n Found res: %d, res_n: %d , T: %d\n but failed!"
-                                    % (N, res, res_n, T)
-                                )
+                        elif self.verbose:
+                            print(
+                                "For N = %d\n Found res: %d, res_n: %d , T: %d\n but failed!"
+                                % (N, res, res_n, T)
+                            )
                 
     def factorization(self, N, min_accept, xdiff):
         phi_guess = self.get_period_bigint(N, min_accept, xdiff)

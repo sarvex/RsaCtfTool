@@ -35,11 +35,10 @@ def getpubkeysz(n):
 def _gcdext(a, b):
     if a == 0:
         return [b, 0, 1]
-    else:
-        d = b // a
-        r = b - (d * a)
-        g, y, x = _gcdext(r, a)
-        return [g, x - d * y, y]
+    d = b // a
+    r = b - (d * a)
+    g, y, x = _gcdext(r, a)
+    return [g, x - d * y, y]
 
 
 def _isqrt(n):
@@ -128,7 +127,7 @@ def _is_square(n):
     h = n & 0xF
     if h > 9:
         return False
-    if h != 2 and h != 3 and h != 5 and h != 6 and h != 7 and h != 8:
+    if h not in [2, 3, 5, 6, 7, 8]:
         t = _isqrt(n)
         return t * t == n
     return False
@@ -154,10 +153,10 @@ def miller_rabin(n, k=40):
         r += 1
         s >>= 1
     i = 0
-    for i in range(0, k):
+    for _ in range(0, k):
         a = random.randrange(2, n - 1)
         x = pow(a, s, n)
-        if x == 1 or x == n - 1:
+        if x in [1, n - 1]:
             continue
         j = 0
         while j <= r - 1:
@@ -360,7 +359,6 @@ if gmpy_version > 0:
         mul = gmpy.mul
         powmod = gmpy.powmod
         isqrt_rem = gmpy.isqrt_rem
-        isqrt = gmpy.isqrt
         introot = _introot_gmpy2
         is_divisible = gmpy.is_divisible
         is_congruent = gmpy.is_congruent
@@ -378,13 +376,13 @@ if gmpy_version > 0:
         mod = _mod
         powmod = pow
         isqrt_rem = gmpy.sqrtrem
-        isqrt = gmpy.isqrt
         introot = _introot_gmpy
         is_divisible = _is_divisible
         is_congruent = _is_congruent
         fdivmod = gmpy.fdivmod
         lucas = _lucas
 
+    isqrt = gmpy.isqrt
 else:
     remove = _remove
     iroot = _iroot
@@ -440,8 +438,7 @@ def neg_pow(a, b, n):
     assert b < 0
     assert gcd(a, n) == 1
     res = int(invert(a, n))
-    res = powmod(res, b * (-1), n)
-    return res
+    return powmod(res, b * (-1), n)
 
 
 def common_modulus_related_message(e1, e2, n, c1, c2):
@@ -457,14 +454,8 @@ def common_modulus_related_message(e1, e2, n, c1, c2):
     if g == 1:
         return None
 
-    if a < 0:
-        c1 = neg_pow(c1, a, n)
-    else:
-        c1 = powmod(c1, a, n)
-    if b < 0:
-        c2 = neg_pow(c2, b, n)
-    else:
-        c2 = powmod(c2, b, n)
+    c1 = neg_pow(c1, a, n) if a < 0 else powmod(c1, a, n)
+    c2 = neg_pow(c2, b, n) if b < 0 else powmod(c2, b, n)
     ct = c1 * c2 % n
     return int(introot(ct, g))
 
@@ -565,10 +556,9 @@ def rational_to_contfrac(x, y):
     a = x // y
     if a * y == x:
         return [a]
-    else:
-        pquotients = rational_to_contfrac(y, x - a * y)
-        pquotients.insert(0, a)
-        return pquotients
+    pquotients = rational_to_contfrac(y, x - a * y)
+    pquotients.insert(0, a)
+    return pquotients
 
 
 def contfrac_to_rational(frac):
@@ -578,17 +568,14 @@ def contfrac_to_rational(frac):
     elif len(frac) == 1:
         return (frac[0], 1)
     else:
-        remainder = frac[1 : len(frac)]
+        remainder = frac[1:]
         (num, denom) = contfrac_to_rational(remainder)
         return (frac[0] * num + denom, num)
 
 
 def convergents_from_contfrac(frac, progress=False):
     """Convergents_from_contfrac implementation"""
-    convs = []
-    for i in range(0, len(frac)):
-        convs.append(contfrac_to_rational(frac[0:i]))
-    return convs
+    return [contfrac_to_rational(frac[:i]) for i in range(0, len(frac))]
 
 
 def inv_mod_pow_of_2(factor, bit_count):

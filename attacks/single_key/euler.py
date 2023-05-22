@@ -19,7 +19,7 @@ def euler(n):
 
     lf = 0
     while a < end:
-        b, f = isqrt_rem(n - (a * a))
+        b, f = isqrt_rem(n - a**2)
         if f == 0 and (a != firstb) and (b != firstb):
             solutionsFound.append([b, a])
             firstb = b

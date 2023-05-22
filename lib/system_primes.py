@@ -1298,10 +1298,7 @@ a0e03b4dae2af5b0c8ebbb3c83539961
 
 
 def addpm1(n):
-    if n > 2:
-        return [n - 1, n, n + 1]
-    else:
-        return [n, n + 1]
+    return [n - 1, n, n + 1] if n > 2 else [n, n + 1]
 
 
 def load_system_consts():

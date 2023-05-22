@@ -34,7 +34,7 @@ class SiqsAttack(object):
         yafurun = subprocess.check_output(
             [
                 "yafu",
-                "siqs(" + str(self.n) + ")",
+                f"siqs({str(self.n)})",
                 "-siqsT",
                 str(self.timeout),
                 "-threads",
@@ -44,16 +44,15 @@ class SiqsAttack(object):
             stderr=subprocess.DEVNULL,
         )
 
-        primesfound = []
-
         if b"input too big for SIQS" in yafurun:
             self.logger.error("[-] Modulus too big for SIQS method.")
             return
 
-        for line in yafurun.splitlines():
-            if re.search(b"^P[0-9]+ = [0-9]+$", line):
-                primesfound.append(int(line.split(b"=")[1]))
-
+        primesfound = [
+            int(line.split(b"=")[1])
+            for line in yafurun.splitlines()
+            if re.search(b"^P[0-9]+ = [0-9]+$", line)
+        ]
         if len(primesfound) == 2:
             self.p = primesfound[0]
             self.q = primesfound[1]

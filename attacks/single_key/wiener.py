@@ -35,7 +35,9 @@ class Attack(AbstractAttack):
     def attack(self, publickey, cipher=[], progress=True):
         """Wiener's attack"""
         pq = wiener(publickey.n, publickey.e, progress)
-        if pq != None:
+        if pq is None:
+            self.logger.warning("[*] Cracking failed...")
+        else:
             publickey.p, publickey.q = pq
             priv_key = PrivateKey(
                 int(publickey.p),
@@ -44,8 +46,6 @@ class Attack(AbstractAttack):
                 int(publickey.n),
             )
             return priv_key, None
-        else:
-            self.logger.warning("[*] Cracking failed...")
         return None, None
 
     def test(self):
